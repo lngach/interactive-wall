@@ -1,5 +1,8 @@
-from . import iw
+from django.http import HttpResponse
+from .iw import InteractiveWall
 
 
 def index(request):
-    return iw.InteractiveWall.run()
+    iw = InteractiveWall()
+    iw.run()
+    return HttpResponse("hihi")

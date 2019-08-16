@@ -1,4 +1,4 @@
-from pyrealsense2 import rs2
+import pyrealsense2 as rs
 
 
 class DeviceData():
@@ -16,7 +16,7 @@ class DeviceData():
 
     def init(self, device, width, height):
         self.un_init()
-        self.frame_queue = rs2.frame_queue()
+        self.frame_queue = rs.frame_queue()
         self.device = device
         self.sensor = self.device.sensors[0]
         self.sensor_profile = filter(self.video_stream_profiles_wh_filter, filter(self.video_stream_profiles_filter, self.device.sensors[0].video_stream_profiles.sort(
@@ -51,7 +51,7 @@ class DeviceData():
         return self.sensor != None
 
     def video_stream_profiles_depth_filter(video_stream_profile):
-        return video_stream_profile.stream == rs2.stream.depth
+        return video_stream_profile.stream == rs.stream.depth
 
     def video_stream_profiles_descending(video_stream_profile):
         return video_stream_profile.frame_rate

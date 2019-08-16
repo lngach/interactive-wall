@@ -1,4 +1,4 @@
-from . import movie_data
+from .movie_data import MovieData
 
 
 class WaitMovieData(MovieData):
@@ -6,12 +6,9 @@ class WaitMovieData(MovieData):
     wait_time = None
 
     def __init__(self, *args, **kwargs):
-        time = args[0] or kwargs.get("time")
-        movie = args[1] or kwargs.get("movie")
-        if time == None and movie == None:
-            self.init(0, '')
-        else:
-            self.init(time, movie)
+        time = args[0] if args or kwargs.get("time") else 0
+        movie = args[1] if args or kwargs.get("movie") else ''
+        self.init(time, movie)
 
     def init(self, time, movie):
-        self.init(movie)
+        super().init(movie)

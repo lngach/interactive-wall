@@ -1,4 +1,4 @@
-from . import movie_data
+from .movie_data import MovieData
 
 
 class HitArea(MovieData):
@@ -9,20 +9,15 @@ class HitArea(MovieData):
     right = None
 
     def __init__(self, *args, **kwargs):
-        top = args[0] or kwargs.get("top")
-        bottom = args[1] or kwargs.get("bottom")
-        left = args[2] or kwargs.get("left")
-        right = args[3] or kwargs.get("right")
-        movie = args[4] or kwargs.get("movie")
-        if movie != None and top != None and bottom != None and left != None and right != None:
-            self.init(top, bottom, left, right, movie)
-        elif top != None and bottom != None and left != None and right != None:
-            self.init(top, bottom, left, right, '')
-        else:
-            self.init(0.0, 0.0, 0.0, 0.0, '')
+        top = args[0] if args or kwargs.get("top") else 0.0
+        bottom = args[1] if args or kwargs.get("bottom") else 0.0
+        left = args[2] if args or kwargs.get("left") else 0.0
+        right = args[3] if args or kwargs.get("right") else 0.0
+        movie = args[4] if args or kwargs.get("movie") else ""
+        self.init(top, bottom, left, right, movie)
 
     def init(self, top, bottom, left, right, movie):
-        self.init(m)
+        super().init(movie)
         self.active = True
         self.top = top
         self.bottom = bottom

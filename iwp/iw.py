@@ -1,13 +1,13 @@
 import numpy as np
 from datetime import datetime
 from math import sin, cos, pi
-import pyrealsense2 as rs2
+import pyrealsense2 as rs
 
-from classes.device_data import DeviceData
-from classes.device_setting_info import DeviceSettingInfo
-from classes.hit_area import HitArea
-from classes.movie_data import MovieData
-from classes.wait_movie_data import WaitMovieData
+from .classes.device_data import DeviceData
+from .classes.device_setting_info import DeviceSettingInfo
+from .classes.hit_area import HitArea
+from .classes.movie_data import MovieData
+from .classes.wait_movie_data import WaitMovieData
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,7 +15,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
 
-class InteractiveWall:
+class InteractiveWall():
     _mBGMId = ''
     _mMaxMovieCount = 3
     DEPTH_SENSOR_WIDTH = 640
@@ -30,7 +30,7 @@ class InteractiveWall:
     AUDIO_START_KEY = '_play'
     AUDIO_STOP_KEY = '_stop'
     AUDIO_PAUSE_KEY = '_pause'
-    CHROMEDRIVER_PATH = './chromedriver'
+    CHROMEDRIVER_PATH = '/home/nah/Worlplace/Nah/iwp/iwp/chromedriver'
     _mContentPath = None
     _mDeviceList = None
     _mContext = None
@@ -43,28 +43,27 @@ class InteractiveWall:
     _mLastHitTime = None
 
     @staticmethod
-    def run(self):
-        self._mIsUpdatingDeviceList = False
-        self._mDeviceList = []
-        self._mDeviceSetting = []
-        self._mMovieList = []
+    def run():
+        InteractiveWall._mIsUpdatingDeviceList = False
+        InteractiveWall._mDeviceList = []
+        InteractiveWall._mDeviceSetting = []
+        InteractiveWall._mMovieList = []
 
         try:
-            with open('setting.txt', 'r') as f:
+            with open('/home/nah/Worlplace/Nah/iwp/iwp/setting.txt', 'r') as f:
                 line = f.readline()
                 separator = ":"
-                ch_array = [' ', '\t']
                 while line:
                     str_array = line.split(separator, 2)
-                    if str_array >= 2:
+                    if len(str_array) >= 2:
                         str = str_array[0]
-                        if not (str == "content"):
+                        if not(str == "content"):
                             if not(str == "max_movie_count"):
                                 if not(str == "senser"):
                                     if not(str == "wait_movie"):
                                         if not(str == "movie"):
                                             if str == "bgm":
-                                                self._mBGMId = str_array[1].strip(
+                                                InteractiveWall._mBGMId = str_array[1].strip(
                                                 )
                                         else:
                                             str_array2 = str_array[1].strip().split(
@@ -78,10 +77,11 @@ class InteractiveWall:
                                                     hit_area.top = str_array2[2]
                                                     hit_area.right = str_array2[3]
                                                     hit_area.bottom = str_array2[4]
-                                                    self._mMovieList.append(
+                                                    InteractiveWall._mMovieList.append(
                                                         hit_area)
-                                                except:
-                                                    pass
+                                                except Exception as e:
+                                                    print(
+                                                        'Error at fifth block {0}'.format(e))
 
                                     else:
                                         str_array2 = str_array[1].strip().split(
@@ -93,10 +93,11 @@ class InteractiveWall:
                                             try:
                                                 wait_movie_data.wait_time = str_array2[1].strip(
                                                 )
-                                                self._mMovieList.append(
+                                                InteractiveWall._mMovieList.append(
                                                     wait_movie_data)
-                                            except:
-                                                pass
+                                            except Exception as e:
+                                                print(
+                                                    'Error at third block {0}'.format(e))
                                 else:
                                     str_array2 = str_array[1].strip().split(
                                         ',')
@@ -117,53 +118,58 @@ class InteractiveWall:
                                             )
                                             device_setting_info.offset_top = str_array2[6].strip(
                                             )
-                                            self._mDeviceSetting.append(
+                                            InteractiveWall._mDeviceSetting.append(
                                                 device_setting_info)
-                                        except:
-                                            pass
+                                        except Exception as e:
+                                            print(
+                                                'Error at third block {0}'.format(e))
                             else:
                                 try:
-                                    self._mMaxMovieCount = str_array[1].strip()
-                                except:
-                                    pass
+                                    InteractiveWall._mMaxMovieCount = str_array[1].strip(
+                                    )
+                                except Exception as e:
+                                    print(
+                                        'Error at second block {0}'.format(e))
 
                         else:
-                            self._mContentPath = str_array[1].strip()
+                            InteractiveWall._mContentPath = str_array[1].strip(
+                            )
                     line = f.readline()
-        except:
-            pass
-        self._mContext = rs2.context()
-        self._mContext.on_devices_changed += rs2.context.set_devices_changed_callback(
-            self.on_sense_devices_changed)
-        if len(self._mDeviceSetting) <= 0:
+        except Exception as e:
+            print(
+                'Error at first block {0}'.format(e))
+        InteractiveWall._mContext = rs.context()
+        InteractiveWall._mContext.set_devices_changed_callback(
+            InteractiveWall.on_sense_devices_changed)
+        if len(InteractiveWall._mDeviceSetting) <= 0:
             input()
         else:
-            self._mHitAreaIdList = []
-            self._mHitList = []
-            self._mCurrentHitList = []
-            for i in range(len(self._mMovieList)):
-                mMovie = self._mMovieList[i]
-                self._mHitList.append(False)
-                self._mCurrentHitList.append(False)
+            InteractiveWall._mHitAreaIdList = []
+            InteractiveWall._mHitList = []
+            InteractiveWall._mCurrentHitList = []
+            for i in range(len(InteractiveWall._mMovieList)):
+                mMovie = InteractiveWall._mMovieList[i]
+                InteractiveWall._mHitList.append(False)
+                InteractiveWall._mCurrentHitList.append(False)
                 if type(mMovie) == type(HitArea):
-                    self._mHitAreaIdList.append(i)
-            self._mLastHitTime = datetime.now()
+                    InteractiveWall._mHitAreaIdList.append(i)
+            InteractiveWall._mLastHitTime = datetime.now()
 
             options = Options()
-            options.headless = True
+            options.add_argument('disable-infobars')
             driver = webdriver.Chrome(
-                CHROMEDRIVER_PATH, chrome_options=options)
-            driver.navigate().goto_url(self._mContentPath)
-            driver.manage().window.full_screen()
-            if self._mBGMId != "":
-                driver.find_element_by_id(self._mBGMId + "_play").click()
+                InteractiveWall.CHROMEDRIVER_PATH, chrome_options=options)
+            driver.get('file://' + InteractiveWall._mContentPath)
+            if InteractiveWall._mBGMId != "":
+                driver.find_element_by_id(
+                    InteractiveWall._mBGMId + "_play").click()
 
-            while true:
-                enumerator1 = enumerate(self._mHitAreaIdList)
+            while True:
+                enumerator1 = enumerate(InteractiveWall._mHitAreaIdList)
                 for i, current in enumerator1:
-                    self._mCurrentHitList[current] = False
-                    if current.device_serial in self._mDeviceList:
-                        mDevice = self._mDeviceList[current.device_serial]
+                    InteractiveWall._mCurrentHitList[current] = False
+                    if current.device_serial in InteractiveWall._mDeviceList:
+                        mDevice = InteractiveWall._mDeviceList[current.device_serial]
                         if mDevice.frame_wait(current.touch_line) and mDevice.is_update_frame_buffer():
                             for i in range(mDevice.width):
                                 num1 = (
@@ -178,18 +184,18 @@ class InteractiveWall:
                                         sin(num2*pi / 180.0) + \
                                         current.offset_top
                                     for index, item in enumerator1:
-                                        if self._mCurrentHitList[item]:
-                                            mMovie = self._mMovieList[item]
+                                        if not InteractiveWall._mCurrentHitList[item]:
+                                            mMovie = InteractiveWall._mMovieList[item]
                                             if mMovie.left <= num4 and mMovie.top <= num5 and (num4 <= mMovie.right and num5 <= mMovie.bottom):
-                                                self._mCurrentHitListp[current] = True
+                                                InteractiveWall._mCurrentHitListp[current] = True
             flag = False
             num = 0
             for index, current in enumerator1:
-                if self._mCurrentHitList[current]:
+                if InteractiveWall._mCurrentHitList[current]:
                     flag = True
             if flag:
-                for i in range(len(self._mMovieList)):
-                    mMovie = self._mMovieList[i]
+                for i in range(len(InteractiveWall._mMovieList)):
+                    mMovie = InteractiveWall._mMovieList[i]
                     if type(mMovie) == type(WaitMovieData):
                         if driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
                             driver.find_element_by_id(
@@ -197,36 +203,35 @@ class InteractiveWall:
                     elif driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
                         ++num
             else:
-                time_span = datetime.now - self._mLastHitTime
-                for i in range(len(self._mMovieList)):
-                    mMovie = self._mMovieList[i]
+                time_span = datetime.now - InteractiveWall._mLastHitTime
+                for i in range(len(InteractiveWall._mMovieList)):
+                    mMovie = InteractiveWall._mMovieList[i]
                     if type(mMovie) == type(WaitMovieData) and time_span >= mMovie.wait_time and driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
                         driver.find_element_by_id(
                             mMovie.movie_start_key()).click()
             for index, current in enumerator1:
-                if self._mCurrentHitList[current] != self._mHitList[current]:
-                    mMovie = self._mMovieList[current]
-                    self._mHitList[current] = self._mCurrentHitList[current]
-                    if num < self._mMaxMovieCount and self._mHitList[current] and not driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
+                if InteractiveWall._mCurrentHitList[current] != InteractiveWall._mHitList[current]:
+                    mMovie = InteractiveWall._mMovieList[current]
+                    InteractiveWall._mHitList[current] = InteractiveWall._mCurrentHitList[current]
+                    if num < InteractiveWall._mMaxMovieCount and InteractiveWall._mHitList[current] and not driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
                         driver.find_element_by_id(
                             mMovie.movie_start_key()).click()
                         ++num
 
     @staticmethod
     def on_sense_devices_changed(removed, added):
-        self.update_device_list()
+        InteractiveWall.update_device_list()
 
     @staticmethod
-    def update_device_list(self):
-        self._mIsUpdatingDeviceList = True
-        self._mDeviceList.clear()
-        for index, current in enumerate(self._mDeviceList):
+    def update_device_list():
+        InteractiveWall._mIsUpdatingDeviceList = True
+        InteractiveWall._mDeviceList.clear()
+        for index, current in enumerate(InteractiveWall._mDeviceList):
             device_data = DeviceData(
-                current, self.DEPTH_SENSOR_WIDTH, self.DEPTH_SENSOR_HEIGHT)
-            # Lack of parameter
-            key = device_data.device.get_info(rs2.camera_info.serial_number)
-            self._mDeviceList.append(key, device_data)
+                current, InteractiveWall.DEPTH_SENSOR_WIDTH, InteractiveWall.DEPTH_SENSOR_HEIGHT)
+            key = device_data.device.get_info(rs.camera_info.serial_number)
+            InteractiveWall._mDeviceList.append(key, device_data)
 
-        for index, current in enumerate(self._mDeviceList):
+        for index, current in enumerate(InteractiveWall._mDeviceList):
             print(" >> Device serial {0}".format(current))
-        self._mIsUpdatingDeviceList = False
+        InteractiveWall._mIsUpdatingDeviceList = False
