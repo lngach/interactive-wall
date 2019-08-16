@@ -1,5 +1,5 @@
 import numpy as np
-from datetime import datetime
+import time
 from math import sin, cos, pi
 import pyrealsense2 as rs
 
@@ -135,88 +135,93 @@ class InteractiveWall():
                             InteractiveWall._mContentPath = str_array[1].strip(
                             )
                     line = f.readline()
-        except Exception as e:
-            print(
-                'Error at first block {0}'.format(e))
-        InteractiveWall._mContext = rs.context()
-        InteractiveWall._mContext.set_devices_changed_callback(
-            InteractiveWall.on_sense_devices_changed)
-        if len(InteractiveWall._mDeviceSetting) <= 0:
-            input()
-        else:
-            InteractiveWall._mHitAreaIdList = []
-            InteractiveWall._mHitList = []
-            InteractiveWall._mCurrentHitList = []
-            for i in range(len(InteractiveWall._mMovieList)):
-                mMovie = InteractiveWall._mMovieList[i]
-                InteractiveWall._mHitList.append(False)
-                InteractiveWall._mCurrentHitList.append(False)
-                if type(mMovie) == type(HitArea):
-                    InteractiveWall._mHitAreaIdList.append(i)
-            InteractiveWall._mLastHitTime = datetime.now()
-
-            options = Options()
-            options.add_argument('disable-infobars')
-            driver = webdriver.Chrome(
-                InteractiveWall.CHROMEDRIVER_PATH, chrome_options=options)
-            driver.get('file://' + InteractiveWall._mContentPath)
-            if InteractiveWall._mBGMId != "":
-                driver.find_element_by_id(
-                    InteractiveWall._mBGMId + "_play").click()
-
-            while True:
-                enumerator1 = enumerate(InteractiveWall._mHitAreaIdList)
-                for i, current in enumerator1:
-                    InteractiveWall._mCurrentHitList[current] = False
-                    if current.device_serial in InteractiveWall._mDeviceList:
-                        mDevice = InteractiveWall._mDeviceList[current.device_serial]
-                        if mDevice.frame_wait(current.touch_line) and mDevice.is_update_frame_buffer():
-                            for i in range(mDevice.width):
-                                num1 = (
-                                    mDevice.widh - i) / mDevice.width if current.reverse_flag != 0 else i / mDevice.width
-                                num2 = current.angle - current.view_range / 2.0 + num1 * current.view_range
-                                num3 = mDevice.distance[i]
-                                if num3 > 0.0:
-                                    num4 = num3 * \
-                                        cos(num2*pi / 180.0) + \
-                                        current.offset_left
-                                    num5 = num3 * \
-                                        sin(num2*pi / 180.0) + \
-                                        current.offset_top
-                                    for index, item in enumerator1:
-                                        if not InteractiveWall._mCurrentHitList[item]:
-                                            mMovie = InteractiveWall._mMovieList[item]
-                                            if mMovie.left <= num4 and mMovie.top <= num5 and (num4 <= mMovie.right and num5 <= mMovie.bottom):
-                                                InteractiveWall._mCurrentHitListp[current] = True
-            flag = False
-            num = 0
-            for index, current in enumerator1:
-                if InteractiveWall._mCurrentHitList[current]:
-                    flag = True
-            if flag:
-                for i in range(len(InteractiveWall._mMovieList)):
-                    mMovie = InteractiveWall._mMovieList[i]
-                    if type(mMovie) == type(WaitMovieData):
-                        if driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
-                            driver.find_element_by_id(
-                                mMovie.movie_stop_key()).click()
-                    elif driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
-                        ++num
+            InteractiveWall._mContext = rs.context()
+            InteractiveWall._mContext.set_devices_changed_callback(
+                InteractiveWall.on_sense_devices_changed)
+            InteractiveWall.update_device_list()
+            if len(InteractiveWall._mDeviceSetting) <= 0:
+                print("No devices are connected")
             else:
-                time_span = datetime.now - InteractiveWall._mLastHitTime
+                print("Devices are connected")
+                InteractiveWall._mHitAreaIdList = []
+                InteractiveWall._mHitList = []
+                InteractiveWall._mCurrentHitList = []
                 for i in range(len(InteractiveWall._mMovieList)):
                     mMovie = InteractiveWall._mMovieList[i]
-                    if type(mMovie) == type(WaitMovieData) and time_span >= mMovie.wait_time and driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
-                        driver.find_element_by_id(
-                            mMovie.movie_start_key()).click()
-            for index, current in enumerator1:
-                if InteractiveWall._mCurrentHitList[current] != InteractiveWall._mHitList[current]:
-                    mMovie = InteractiveWall._mMovieList[current]
-                    InteractiveWall._mHitList[current] = InteractiveWall._mCurrentHitList[current]
-                    if num < InteractiveWall._mMaxMovieCount and InteractiveWall._mHitList[current] and not driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
-                        driver.find_element_by_id(
-                            mMovie.movie_start_key()).click()
-                        ++num
+                    InteractiveWall._mHitList.append(False)
+                    InteractiveWall._mCurrentHitList.append(False)
+                    if isinstance(mMovie, HitArea):
+                        InteractiveWall._mHitAreaIdList.append(i)
+                InteractiveWall._mLastHitTime = time.time()
+
+                options = Options()
+                options.add_argument('disable-infobars')
+                driver = webdriver.Chrome(
+                    InteractiveWall.CHROMEDRIVER_PATH, chrome_options=options)
+                driver.get('file://' + InteractiveWall._mContentPath)
+                if InteractiveWall._mBGMId != "":
+                    driver.find_element_by_id(
+                        InteractiveWall._mBGMId + "_play").click()
+
+                while True:
+                    enumerator1 = enumerate(InteractiveWall._mHitAreaIdList)
+                    for i, current in enumerator1:
+                        InteractiveWall._mCurrentHitList[current] = False
+                    enumerator2 = enumerate(InteractiveWall._mDeviceSetting)
+                    for i, current in enumerator2:
+                        if current.device_serial in InteractiveWall._mDeviceList:
+                            mDevice = InteractiveWall._mDeviceList[current.device_serial]
+                            if mDevice.frame_wait(current.touch_line) and mDevice.is_update_frame_buffer():
+                                for i in range(mDevice.width):
+                                    num1 = (
+                                        mDevice.widh - i) / mDevice.width if current.reverse_flag != 0 else i / mDevice.width
+                                    num2 = current.angle - current.view_range / 2.0 + num1 * current.view_range
+                                    num3 = mDevice.distance[i]
+                                    if num3 > 0.0:
+                                        num4 = num3 * \
+                                            cos(num2*pi / 180.0) + \
+                                            current.offset_left
+                                        num5 = num3 * \
+                                            sin(num2*pi / 180.0) + \
+                                            current.offset_top
+                                        for index, item in enumerator1:
+                                            if not InteractiveWall._mCurrentHitList[item]:
+                                                mMovie = InteractiveWall._mMovieList[item]
+                                                if mMovie.left <= num4 and mMovie.top <= num5 and (num4 <= mMovie.right and num5 <= mMovie.bottom):
+                                                    InteractiveWall._mCurrentHitListp[current] = True
+                    flag = False
+                    num = 0
+                    for index, current in enumerator1:
+                        if InteractiveWall._mCurrentHitList[current]:
+                            flag = True
+                    if flag:
+                        for i in range(len(InteractiveWall._mMovieList)):
+                            mMovie = InteractiveWall._mMovieList[i]
+                            if isinstance(mMovie, WaitMovieData):
+                                if driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
+                                    print("In1")
+                                    driver.find_element_by_id(
+                                        mMovie.movie_stop_key()).click()
+                            elif driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
+                                ++num
+                    else:
+                        time_span = time.time() - InteractiveWall._mLastHitTime
+                        for i in range(len(InteractiveWall._mMovieList)):
+                            mMovie = InteractiveWall._mMovieList[i]
+                            if isinstance(mMovie, WaitMovieData) and time_span >= float(mMovie.wait_time) and not driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
+                                print("In2")
+                                driver.find_element_by_id(
+                                    mMovie.movie_start_key()).click()
+                    for index, current in enumerator1:
+                        if InteractiveWall._mCurrentHitList[current] != InteractiveWall._mHitList[current]:
+                            mMovie = InteractiveWall._mMovieList[current]
+                            InteractiveWall._mHitList[current] = InteractiveWall._mCurrentHitList[current]
+                            if num < InteractiveWall._mMaxMovieCount and InteractiveWall._mHitList[current] and not driver.find_element_by_id(mMovie.movie_status_key()).get_attribute("data_is_play") == "true":
+                                driver.find_element_by_id(
+                                    mMovie.movie_start_key()).click()
+                                ++num
+        except Exception as e:
+            print("Error at the first block {0}".format(e))
 
     @staticmethod
     def on_sense_devices_changed(removed, added):
@@ -226,11 +231,11 @@ class InteractiveWall():
     def update_device_list():
         InteractiveWall._mIsUpdatingDeviceList = True
         InteractiveWall._mDeviceList.clear()
-        for index, current in enumerate(InteractiveWall._mDeviceList):
+        for index, current in enumerate(InteractiveWall._mContext.devices):
             device_data = DeviceData(
                 current, InteractiveWall.DEPTH_SENSOR_WIDTH, InteractiveWall.DEPTH_SENSOR_HEIGHT)
             key = device_data.device.get_info(rs.camera_info.serial_number)
-            InteractiveWall._mDeviceList.append(key, device_data)
+            InteractiveWall._mDeviceList.append((key, device_data))
 
         for index, current in enumerate(InteractiveWall._mDeviceList):
             print(" >> Device serial {0}".format(current))

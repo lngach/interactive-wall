@@ -1,7 +1,7 @@
 content: /home/nah/Worlplace/Nah/iwp/iwp/public/index.html
 senser: 834412070350,230,84,62,1,0.056,0.15
 senser: 818312071301,255,84,122,0,-0.012,0.15
-wait_movie:  movie000,30
+wait_movie: movie000,30
 
 max_movie_count: 5
 movie: movie001,    -1.12, 1.63, -0.82, 1.87
