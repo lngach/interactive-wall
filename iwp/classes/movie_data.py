@@ -2,8 +2,8 @@ class MovieData():
     movieId = None
 
     def __init__(self, *args, **kwargs):
-        movie = args[0] or kwargs.get("movie")
-        if movie == None:
+        movie = args[0] if args or kwargs.get("movie") else ""
+        if movie == "":
             self.init("")
         else:
             self.init(movie)
@@ -12,24 +12,24 @@ class MovieData():
         self.movieId = movie
 
     def is_active(self):
-        return len(self.movieId) > 0
+        return self.movieId != ""
 
     def movie_status_key(self):
-        if (self.is_active()):
+        if self.is_active():
             return self.movieId + '_status'
-        return None
+        return ""
 
     def movie_start_key(self):
-        if (self.is_active()):
+        if self.is_active():
             return self.movieId + '_play'
-        return None
+        return ""
 
     def movie_stop_key(self):
-        if (self.is_active()):
+        if self.is_active():
             return self.movieId + '_stop'
-        return None
+        return ""
 
     def movie_pause_key(self):
-        if (self.is_active()):
+        if self.is_active():
             return self.movieId + '_pause'
-        return None
+        return ""

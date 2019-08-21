@@ -1,6 +1,6 @@
-content: /home/nah/Worlplace/Nah/iwp/iwp/public/index.html
-senser: 834412070350,230,84,62,1,0.056,0.15
-senser: 818312071301,255,84,122,0,-0.012,0.15
+content: /home/lngach/Workplace/interactive-wall/iwp/public/index.html
+senser: 827312070155,230,84,62,1,0.056,0.15
+senser: 833612070323,255,84,122,0,-0.012,0.15
 wait_movie: movie000,30
 
 max_movie_count: 5

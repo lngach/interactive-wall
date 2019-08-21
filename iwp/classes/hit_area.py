@@ -25,4 +25,4 @@ class HitArea(MovieData):
         self.right = right
 
     def is_active(self):
-        super().is_active() and self.active
+        return super().is_active() and self.active

@@ -1,5 +1,5 @@
 import pyrealsense2 as rs
-
+import numpy as np
 
 class DeviceData():
     frame_queue = None
@@ -16,9 +16,9 @@ class DeviceData():
 
     def init(self, device, width, height):
         self.un_init()
-        self.frame_queue = rs.frame_queue()
+        self.frame_queue = rs.frame_queue(10)
         self.device = device
-        self.sensor = self.device.sensors[0]
+        self.sensor = self.device.first_depth_sensor()
 
         stream_profiles = self.sensor.get_stream_profiles()
         video_stream_profiles = []
@@ -43,8 +43,8 @@ class DeviceData():
         self.sensor_profile = width_height_sorted_depth_video_stream_profiles[0]
         self.width = self.sensor_profile.width()
         self.height = self.sensor_profile.height()
-        self.depth = self.width * self.height
-        self.distance = self.width
+        self.depth = np.empty(self.height * self.width, dtype=np.uint)
+        self.distance = np.empty(self.width, dtype=np.float)
         self.sensor.open(self.sensor_profile)
         self.sensor.start(self.frame_queue)
 
@@ -60,18 +60,21 @@ class DeviceData():
     def frame_wait(self, touchline):
         if self.sensor != None:
             try:
-                video_frame = self.frame_queue.wait_for_frame(100)
-                video_frame.copy_to(self.depth)
-                video_frame.dispose()
-                if touchline >= 0:
-                    if touchline <= self.height:
+                frame = self.frame_queue.wait_for_frame(100 & 0xffff)
+                if not frame.is_depth_frame():
+                    return False
+                self.depth = np.full(self.height * self.width, np.reshape(frame.get_data(), self.height * self.width))
+                if float(touchline) >= 0:
+                    if float(touchline) < self.height:
                         for i in range(self.width):
-                            self.distance[i] = self.depth[i + touchline *
-                                                          self.width] * self.sensor.get_depth_scale()
-            except expression as identifier:
+                            self.distance[i] = float(self.depth[int(i + int(touchline) *
+                                                          self.width)] * self.sensor.get_depth_scale())
+                print(self.distance)
+            except Exception as e:
+                print(e)
                 return False
-            finally:
-                return True
+        return True
 
     def is_updated_frame_buffer(self):
         return self.sensor != None
+
